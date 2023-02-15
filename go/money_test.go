@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func assertEqual(t *testing.T, expected, actual s.Money) {
+func assertEqual(t *testing.T, expected, actual interface{}) {
 	if expected != actual {
 		t.Errorf("Expected %+v, got: %+v", expected, actual)
 	}
@@ -35,7 +35,7 @@ func TestAddition(t *testing.T) {
 
 	portFolio = portFolio.Add(fiveDollars)
 	portFolio = portFolio.Add(tenDollars)
-	portFolioInDollars = portFolio.Evaluate("USD")
+	portFolioInDollars, _ = portFolio.Evaluate("USD")
 
 	assertEqual(t, fifteenDollars, portFolioInDollars)
 }
@@ -50,7 +50,7 @@ func TestAddtionOfDollarsAndEuros(t *testing.T) {
 	portFolio = portFolio.Add(tenEuros)
 
 	expectedValue := s.NewMoney(17, "USD")
-	actualValue := portFolio.Evaluate("USD")
+	actualValue, _ := portFolio.Evaluate("USD")
 
 	assertEqual(t, expectedValue, actualValue)
 }
@@ -65,7 +65,24 @@ func TestAdditionOfDollarsAndWons(t *testing.T) {
 	portFolio = portFolio.Add(elevenHundredWon)
 
 	expectedValue := s.NewMoney(2200, "KRW")
-	actualValue := portFolio.Evaluate("KRW")
+	actualValue, _ := portFolio.Evaluate("KRW")
 
 	assertEqual(t, expectedValue, actualValue)
+}
+
+func TestAdditionWithMultipleMissingExchangeRates(t *testing.T) {
+	var portFolio s.PortFolio
+
+	oneDollar := s.NewMoney(1, "USD")
+	oneEuro := s.NewMoney(1, "EUR")
+	oneWon := s.NewMoney(1, "KRW")
+
+	portFolio = portFolio.Add(oneDollar)
+	portFolio = portFolio.Add(oneEuro)
+	portFolio = portFolio.Add(oneWon)
+
+	expectedErrorMessage := "Missing exchange rate(s):[USD->Kalganid,EUR->Kalganid,KRW->Kalganid,]"
+	_, actualError := portFolio.Evaluate("Kalganid")
+
+	assertEqual(t, expectedErrorMessage, actualError.Error())
 }
